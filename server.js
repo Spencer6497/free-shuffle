@@ -1,3 +1,5 @@
+const axios = require("axios");
+
 const express = require("express");
 const bodyParser = require("body-parser");
 
@@ -16,6 +18,11 @@ app.post("/api/world", (req, res) => {
   res.send(
     `I received your POST request. This is what you sent me: ${req.body.post}`
   );
+});
+
+app.get("/api/clientIP", (req, res) => {
+  // res.send(axios.get("https://geolocation-db.com/json/"));
+  res.send({ ip: req.ip });
 });
 
 app.listen(port, () => console.log(`Listening on port ${port}`));

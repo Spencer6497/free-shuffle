@@ -18,26 +18,26 @@ export default class App extends React.PureComponent {
       lng: -84.5,
       lat: 39.1,
       zoom: 9,
+      distance: "",
     };
     this.mapContainer = React.createRef();
+    this.handleChange = this.handleChange.bind(this);
+    this.handleSubmit = this.handleSubmit.bind(this);
   }
 
-  state = {
-    response: "",
-    post: "",
-    responseToPost: "",
-  };
+  markerArr = [];
+  clientIP = "";
 
   componentDidMount() {
-    // this.callApi()
-    //   .then((res) => this.setState({ response: res.express }))
-    //   .catch((err) => console.log(err));
+    this.fetchClientIP().then((res) => (this.clientIP = res.ip));
+
     const { lng, lat, zoom } = this.state;
     const map = new mapboxgl.Map({
       container: this.mapContainer.current,
       style: "mapbox://styles/mapbox/streets-v11",
       center: [lng, lat],
       zoom: zoom,
+      proximity: this.clientIP,
     });
 
     map.on("move", () => {
@@ -48,6 +48,7 @@ export default class App extends React.PureComponent {
       });
     });
 
+    // Initialize geocoder
     const geocoder = new MapboxGeocoder({
       accessToken: mapboxgl.accessToken,
       mapboxgl: mapboxgl,
@@ -60,8 +61,10 @@ export default class App extends React.PureComponent {
 
     // Add geocoder result to container.
     geocoder.on("result", (e) => {
+      this.markerArr.forEach((marker) => marker.remove());
       const newCoords = e.result.center;
       const marker = new mapboxgl.Marker().setLngLat(newCoords).addTo(map);
+      this.markerArr.push(marker);
       map.flyTo({
         center: newCoords,
         zoom: 13,
@@ -73,30 +76,24 @@ export default class App extends React.PureComponent {
     // Clear results container when search is cleared.
     geocoder.on("clear", () => {
       results.innerText = "";
+      this.markerArr.forEach((marker) => marker.remove());
     });
   }
 
-  // callApi = async () => {
-  //   const response = await fetch("/api/hello");
-  //   const body = await response.json();
-  //   if (response.status !== 200) throw Error(body.message);
+  fetchClientIP = async () => {
+    const response = await fetch("/api/clientIP");
+    const body = await response.json();
+    return body;
+  };
 
-  //   return body;
-  // };
+  handleChange(event) {
+    this.setState({ distance: event.target.value });
+  }
 
-  // handleSubmit = async (e) => {
-  //   e.preventDefault();
-  //   const response = await fetch("/api/world", {
-  //     method: "POST",
-  //     headers: {
-  //       "Content-Type": "application/json",
-  //     },
-  //     body: JSON.stringify({ post: this.state.post }),
-  //   });
-  //   const body = await response.text();
-
-  //   this.setState({ responseToPost: body });
-  // };
+  handleSubmit(event) {
+    alert("A distance was submitted: " + this.state.distance);
+    event.preventDefault();
+  }
 
   render() {
     const { lng, lat, zoom } = this.state;
@@ -107,6 +104,17 @@ export default class App extends React.PureComponent {
         </div>
         <div ref={this.mapContainer} className="map-container" />
         <div id="geocoder"></div>
+        <form onSubmit={this.handleSubmit}>
+          <label>
+            Distance:
+            <input
+              type="text"
+              value={this.state.distance}
+              onChange={this.handleChange}
+            ></input>
+          </label>
+          <input type="submit" id="distanceSubmitButton"></input>
+        </form>
         <pre id="result"></pre>
       </div>
     );
