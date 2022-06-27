@@ -15,10 +15,10 @@ mapboxgl.accessToken =
 
 // Test isochrone stuff
 const urlBase = "https://api.mapbox.com/isochrone/v1/mapbox/";
-const lon = -77.034;
-const lat = 38.899;
+const lon = -84.5;
+const lat = 39.1;
 const profile = "cycling"; // Set the default routing profile
-const minutes = 10; // Set the default duration
+const meters = 10000; // Set the default distance
 
 export default class App extends React.PureComponent {
   constructor(props) {
@@ -26,7 +26,7 @@ export default class App extends React.PureComponent {
     this.state = {
       lng: -84.5,
       lat: 39.1,
-      zoom: 9,
+      zoom: 12,
       distance: "",
     };
     this.mapContainer = React.createRef();
@@ -55,6 +55,34 @@ export default class App extends React.PureComponent {
       });
     });
 
+    map.on("load", () => {
+      map.addSource("iso", {
+        type: "geojson",
+        data: {
+          type: "FeatureCollection",
+          features: [],
+        },
+      });
+
+      map.addLayer(
+        {
+          id: "isoLayer",
+          type: "fill",
+          // Use "iso" as the data source for this layer
+          source: "iso",
+          layout: {},
+          paint: {
+            // The fill color for the layer is set to a light purple
+            "fill-color": "#5a3fc0",
+            "fill-opacity": 0.3,
+          },
+        },
+        "poi-label"
+      );
+
+      this.getIso(map, this.state.lng, this.state.lat);
+    });
+
     // Initialize geocoder
     const geocoder = new MapboxGeocoder({
       accessToken: mapboxgl.accessToken,
@@ -77,6 +105,7 @@ export default class App extends React.PureComponent {
         zoom: 13,
         speed: 1,
       });
+      this.getIso(map, newCoords[0], newCoords[1]);
       results.innerText = JSON.stringify(e.result, null, 2);
     });
 
@@ -85,8 +114,6 @@ export default class App extends React.PureComponent {
       results.innerText = "";
       this.markerArr.forEach((marker) => marker.remove());
     });
-
-    this.getIso();
   }
 
   fetchClientIP = async () => {
@@ -95,13 +122,15 @@ export default class App extends React.PureComponent {
     return body;
   };
 
-  getIso = async () => {
+  getIso = async (map, lon, lat) => {
     const query = await fetch(
-      `${urlBase}${profile}/${lon},${lat}?contours_minutes=${minutes}&polygons=true&access_token=${mapboxgl.accessToken}`,
+      `${urlBase}${profile}/${lon},${lat}?contours_meters=${meters}&polygons=true&access_token=${mapboxgl.accessToken}`,
       { method: "GET" }
     );
     const data = await query.json();
     console.log(data);
+    // manipulate data, paint on map
+    map.getSource("iso").setData(data);
   };
 
   handleChange(event) {
