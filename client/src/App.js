@@ -3,6 +3,8 @@ import React, { Component } from "react";
 import MapboxGeocoder from "@mapbox/mapbox-gl-geocoder";
 import "@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css";
 
+import { pointGrid } from "@turf/turf";
+
 import logo from "./logo.svg";
 
 import "./App.css";
@@ -10,6 +12,13 @@ import mapboxgl from "!mapbox-gl"; // eslint-disable-line import/no-webpack-load
 
 mapboxgl.accessToken =
   "pk.eyJ1Ijoic3BlbmNlcjY0OTciLCJhIjoiY2w0bHF6NXpiMDBpaTNnbzJleHA3ZDYzbCJ9.ZZGzmhDOJtzWZJSAa8M0gQ";
+
+// Test isochrone stuff
+const urlBase = "https://api.mapbox.com/isochrone/v1/mapbox/";
+const lon = -77.034;
+const lat = 38.899;
+const profile = "cycling"; // Set the default routing profile
+const minutes = 10; // Set the default duration
 
 export default class App extends React.PureComponent {
   constructor(props) {
@@ -29,8 +38,6 @@ export default class App extends React.PureComponent {
   clientIP = "";
 
   componentDidMount() {
-    this.fetchClientIP().then((res) => (this.clientIP = res.ip));
-
     const { lng, lat, zoom } = this.state;
     const map = new mapboxgl.Map({
       container: this.mapContainer.current,
@@ -78,12 +85,23 @@ export default class App extends React.PureComponent {
       results.innerText = "";
       this.markerArr.forEach((marker) => marker.remove());
     });
+
+    this.getIso();
   }
 
   fetchClientIP = async () => {
     const response = await fetch("/api/clientIP");
     const body = await response.json();
     return body;
+  };
+
+  getIso = async () => {
+    const query = await fetch(
+      `${urlBase}${profile}/${lon},${lat}?contours_minutes=${minutes}&polygons=true&access_token=${mapboxgl.accessToken}`,
+      { method: "GET" }
+    );
+    const data = await query.json();
+    console.log(data);
   };
 
   handleChange(event) {
