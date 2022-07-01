@@ -6,7 +6,7 @@ import Col from "react-bootstrap/Col";
 import MapboxGeocoder from "@mapbox/mapbox-gl-geocoder";
 import "@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css";
 
-import { pointGrid } from "@turf/turf";
+import { lineIntersect } from "@turf/turf";
 
 import logo from "./logo.svg";
 
@@ -28,6 +28,12 @@ export default class App extends React.PureComponent {
       zoom: 12,
       distance: 3, // miles by default, must be converted into meters
       profile: "walking", // mode of transport for Isochrone, walking by default
+      firstIso: null,
+      secondIso: null,
+      startAndEnd: [],
+      firstStop: [],
+      secondStop: [],
+      routeDistance: 0,
       map: null,
       markerArr: [],
     };
@@ -76,14 +82,18 @@ export default class App extends React.PureComponent {
       this.state.markerArr.forEach((marker) => marker.remove());
       const newCoords = e.result.center;
       // Set new longitude/latitude and subsequently get isochrone
-      this.setState({ lng: newCoords[0], lat: newCoords[1] }, () => {
-        this.getIso().then(() => {
-          // get last marker and make an iso from it
-          const lastMarkerCoords =
-            this.state.markerArr[this.state.markerArr.length - 1].getLngLat();
-          this.getAndDrawNewIso(lastMarkerCoords);
-        });
-      });
+      this.setState(
+        { lng: newCoords[0], lat: newCoords[1], startAndEnd: e.result.center },
+        () => {
+          this.getIso().then(() => {
+            // get last marker and make an iso from it
+            const lastMarkerCoords =
+              this.state.markerArr[this.state.markerArr.length - 1].getLngLat();
+            this.setState({ firstStop: lastMarkerCoords.toArray() });
+            this.getAndDrawNewIso(lastMarkerCoords);
+          });
+        }
+      );
       const marker = new mapboxgl.Marker({ color: "red" })
         .setLngLat(newCoords)
         .addTo(map);
@@ -97,7 +107,6 @@ export default class App extends React.PureComponent {
 
     // Clear results container when search is cleared.
     geocoder.on("clear", () => {
-      results.innerText = "";
       this.state.markerArr.forEach((marker) => marker.remove());
       this.state.map.removeLayer("isoLayer");
       this.state.map.removeSource("iso");
@@ -114,11 +123,12 @@ export default class App extends React.PureComponent {
       `${urlBase}${this.state.profile}/${this.state.lng},${
         this.state.lat
       }?contours_meters=${Math.floor(
-        this.state.distance * 1609.34
+        (this.state.distance * 1609.34) / 3
       )}&polygons=true&access_token=${mapboxgl.accessToken}`,
       { method: "GET" }
     );
     const data = await query.json();
+    this.setState({ firstIso: data });
     // Add isochrone source/layer if not already existing and set its' data
     // the actual painting of the isochrone on the map can be removed in prod, this is simply for debugging purposes
     if (!this.state.map.getSource("iso")) {
@@ -157,8 +167,6 @@ export default class App extends React.PureComponent {
       .addTo(this.state.map);
     this.state.markerArr.push(marker);
     // get route from start to random point
-    // this.getRoute([this.state.lng, this.state.lat], randomPoint);
-    // this.getRoute(randomPoint, [this.state.lng, this.state.lat]);
   };
 
   // Draw new iso from last point
@@ -167,11 +175,40 @@ export default class App extends React.PureComponent {
       `${urlBase}${this.state.profile}/${newCoords.lng},${
         newCoords.lat
       }?contours_meters=${Math.floor(
-        this.state.distance * 1609.34
+        (this.state.distance * 1609.34) / 3
       )}&polygons=true&access_token=${mapboxgl.accessToken}`,
       { method: "GET" }
     );
     const data = await query.json();
+    // set secondIso and use Turf.js to find intersections
+    this.setState({ secondIso: data }, () => {
+      const intersections = lineIntersect(
+        this.state.firstIso,
+        this.state.secondIso
+      );
+      const randomIntersectionIndex = Math.floor(
+        Math.random() * intersections.features.length
+      );
+      // Set 2nd stop and plot all of them on the map
+      this.setState(
+        {
+          secondStop:
+            intersections.features[randomIntersectionIndex].geometry
+              .coordinates,
+        },
+        () => {
+          const marker = new mapboxgl.Marker({ color: "yellow" })
+            .setLngLat(this.state.secondStop)
+            .addTo(this.state.map);
+          this.getRoute([
+            this.state.startAndEnd,
+            this.state.firstStop,
+            this.state.secondStop,
+            this.state.startAndEnd,
+          ]);
+        }
+      );
+    });
     if (!this.state.map.getSource("newIso")) {
       this.state.map.addSource("newIso", {
         type: "geojson",
@@ -198,19 +235,20 @@ export default class App extends React.PureComponent {
     this.state.map.getSource("newIso").setData(data);
   };
 
-  /**
-   * Builds a route from start --> end and paints it on the map
-   * @param {start coordinate} start
-   * @param {end coordinate} end
-   */
-  getRoute = async (start, end) => {
+  getRoute = async (coords) => {
+    const formattedAPIString = coords
+      .reduce((acc, curr) => {
+        return acc + curr.toString() + ";";
+      }, "")
+      .slice(0, -1);
     const query = await fetch(
-      `https://api.mapbox.com/directions/v5/mapbox/cycling/${start[0]},${start[1]};${end[0]},${end[1]}?steps=true&geometries=geojson&access_token=${mapboxgl.accessToken}`,
+      `https://api.mapbox.com/directions/v5/mapbox/cycling/${formattedAPIString}?steps=true&geometries=geojson&access_token=${mapboxgl.accessToken}`,
       { method: "GET" }
     );
 
     const json = await query.json();
     const data = json.routes[0];
+    this.setState({ routeDistance: data.distance / 1609 });
     const route = data.geometry.coordinates;
     const geojson = {
       type: "Feature",
@@ -269,6 +307,7 @@ export default class App extends React.PureComponent {
                   value={this.state.distance}
                   onChange={this.handleChange}
                 ></input>
+                <pre>{this.state.routeDistance}</pre>
               </label>
               <input type="submit" id="distanceSubmitButton"></input>
             </form>
