@@ -1,4 +1,7 @@
 import React, { Component } from "react";
+import Container from "react-bootstrap/Container";
+import Row from "react-bootstrap/Row";
+import Col from "react-bootstrap/Col";
 
 import MapboxGeocoder from "@mapbox/mapbox-gl-geocoder";
 import "@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css";
@@ -7,7 +10,7 @@ import { pointGrid } from "@turf/turf";
 
 import logo from "./logo.svg";
 
-import "./App.css";
+import "./App.scss";
 import mapboxgl from "!mapbox-gl"; // eslint-disable-line import/no-webpack-loader-syntax
 
 mapboxgl.accessToken =
@@ -52,6 +55,7 @@ export default class App extends React.PureComponent {
       });
 
       this.state.map.on("load", () => {
+        this.state.map.resize();
         // remove if unneeded
       });
     });
@@ -89,7 +93,6 @@ export default class App extends React.PureComponent {
         zoom: 13,
         speed: 1,
       });
-      results.innerText = JSON.stringify(e.result, null, 2);
     });
 
     // Clear results container when search is cleared.
@@ -253,23 +256,28 @@ export default class App extends React.PureComponent {
 
   render() {
     return (
-      <div>
-        <div ref={this.mapContainer} className="map-container" />
-        <div id="geocoder"></div>
-        <form onSubmit={this.handleSubmit}>
-          <label>
-            Distance (miles):
-            <br></br>
-            <input
-              type="text"
-              value={this.state.distance}
-              onChange={this.handleChange}
-            ></input>
-          </label>
-          <input type="submit" id="distanceSubmitButton"></input>
-        </form>
-        <pre id="result"></pre>
-      </div>
+      <Container fluid className="parent-container">
+        <Row>
+          <Col lg={4}>
+            <div id="geocoder"></div>
+            <form onSubmit={this.handleSubmit}>
+              <label>
+                Distance (miles):
+                <br></br>
+                <input
+                  type="text"
+                  value={this.state.distance}
+                  onChange={this.handleChange}
+                ></input>
+              </label>
+              <input type="submit" id="distanceSubmitButton"></input>
+            </form>
+          </Col>
+          <Col lg={8}>
+            <div ref={this.mapContainer} className="map-container" />
+          </Col>
+        </Row>
+      </Container>
     );
   }
 }

@@ -38,8 +38,17 @@
   }
 }
 
-.map-container {
-  height: 400px;
+.parent-container {
+  height: 100vh;
+
+  .row {
+    height: 100vh;
+  }
+
+  .map-container {
+    height: 100%;
+    border-radius: 25px;
+  }
 }
 
 #geocoder {
