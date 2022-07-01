@@ -288,7 +288,13 @@ export default class App extends React.PureComponent {
       // remove current isochrone layer, re-paint with newly-entered distance
       this.state.map.removeLayer("isoLayer");
       this.state.map.removeSource("iso");
-      this.getIso();
+      this.getIso().then(() => {
+        // get last marker and make an iso from it
+        const lastMarkerCoords =
+          this.state.markerArr[this.state.markerArr.length - 1].getLngLat();
+        this.setState({ firstStop: lastMarkerCoords.toArray() });
+        this.getAndDrawNewIso(lastMarkerCoords);
+      });
     }
   }
 
