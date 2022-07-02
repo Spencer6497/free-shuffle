@@ -16,7 +16,6 @@ import Form from "./Form/Form";
 mapboxgl.accessToken =
   "pk.eyJ1Ijoic3BlbmNlcjY0OTciLCJhIjoiY2w0bHF6NXpiMDBpaTNnbzJleHA3ZDYzbCJ9.ZZGzmhDOJtzWZJSAa8M0gQ";
 
-// Test isochrone stuff
 const urlBase = "https://api.mapbox.com/isochrone/v1/mapbox/";
 
 export default class App extends React.PureComponent {
@@ -28,6 +27,7 @@ export default class App extends React.PureComponent {
       profile: "walking", // mode of transport for Isochrone, walking by default
       firstIso: null,
       secondIso: null,
+      initialCoords: [],
       startAndEnd: [],
       firstStop: [],
       secondStop: [],
@@ -54,6 +54,16 @@ export default class App extends React.PureComponent {
     this.setState({ map: map }, () => {
       this.state.map.on("load", () => {
         this.state.map.resize();
+
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition((position) => {
+            const userCoords = [
+              position.coords.longitude,
+              position.coords.latitude,
+            ];
+            this.setState({ initialCoords: userCoords });
+          });
+        }
       });
     });
   }
@@ -75,7 +85,7 @@ export default class App extends React.PureComponent {
 
   clearGeocoderResult = () => {
     this.state.markerArr.forEach((marker) => marker.remove());
-    this.setState({ routeDistance: 0 });
+    this.setState({ routeDistance: 0, initialCoords: [] });
     // Add better null handling when logic is fully fleshed out
     // i.e. maybe have a state variable dataHasBeenFetched or something to prevent submit logic with null input
     if (this.state.map.getSource("geojson")) {
@@ -308,6 +318,7 @@ export default class App extends React.PureComponent {
             routeDistance={this.state.routeDistance}
             handleSubmit={this.handleSubmit}
             mapboxgl={mapboxgl}
+            initialCoords={this.state.initialCoords}
             onGeocoderResult={this.geocoderResult}
             clearGeocoderResult={this.clearGeocoderResult}
           ></Form>

@@ -12,6 +12,7 @@ export default class Form extends React.Component {
     super(props);
     this.state = {
       distance: 3, // miles by default
+      initialCoords: props.initialCoords,
       routeDistance: props.routeDistance,
       handleSubmit: props.handleSubmit,
       unit: "mi",
@@ -27,6 +28,9 @@ export default class Form extends React.Component {
   componentDidUpdate(prevProps) {
     if (this.props.routeDistance !== prevProps.routeDistance) {
       this.setState({ routeDistance: this.props.routeDistance });
+    }
+    if (this.props.initialCoords !== prevProps.initialCoords) {
+      this.setState({ initialCoords: this.props.initialCoords });
     }
   }
 
@@ -57,6 +61,7 @@ export default class Form extends React.Component {
           mapboxgl={this.state.mapboxgl}
           onGeocoderResult={this.state.onGeocoderResult}
           clearGeocoderResult={this.state.clearGeocoderResult}
+          initialCoords={this.state.initialCoords}
         ></Geocoder>
         <FormComponent onSubmit={this.onSubmit}>
           <FormComponent.Group className="mb-3" controlId="distance">
