@@ -23,8 +23,6 @@ export default class App extends React.PureComponent {
   constructor(props) {
     super(props);
     this.state = {
-      lng: -84.5,
-      lat: 39.1,
       zoom: 12,
       distance: 3, // miles by default, must be converted into meters
       profile: "walking", // mode of transport for Isochrone, walking by default
@@ -38,29 +36,22 @@ export default class App extends React.PureComponent {
       markerArr: [],
     };
     this.mapContainer = React.createRef();
-    this.handleChange = this.distanceChanged.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
-    this.distanceChanged = this.distanceChanged.bind(this);
     this.geocoderResult = this.geocoderResult.bind(this);
     this.clearGeocoderResult = this.clearGeocoderResult.bind(this);
   }
 
   componentDidMount() {
-    const { lng, lat, zoom } = this.state;
     const map = new mapboxgl.Map({
       container: this.mapContainer.current,
       style: "mapbox://styles/mapbox/streets-v11",
-      center: [lng, lat],
-      zoom: zoom,
-      // proximity: this.clientIP, figure out the logic for this, probably grab from user's browser
+      center: [-84.5, 39.1],
+      zoom: this.state.zoom,
+      // proximity: this.clientIP, need to grab location from user's browser
     });
 
-    // set the map state and subsequently set event listeners
+    // set the map state and subsequently resize for responsive display
     this.setState({ map: map }, () => {
-      this.state.map.on("move", () => {
-        // remove if unneeded
-      });
-
       this.state.map.on("load", () => {
         this.state.map.resize();
       });
@@ -68,21 +59,9 @@ export default class App extends React.PureComponent {
   }
 
   geocoderResult = (e) => {
-    this.state.markerArr.forEach((marker) => marker.remove());
+    this.clearGeocoderResult();
     const newCoords = e.result.center;
-    // Set new longitude/latitude and subsequently get isochrone
-    this.setState(
-      { lng: newCoords[0], lat: newCoords[1], startAndEnd: e.result.center },
-      () => {
-        this.getIso().then(() => {
-          // get last marker and make an iso from it
-          const lastMarkerCoords =
-            this.state.markerArr[this.state.markerArr.length - 1].getLngLat();
-          this.setState({ firstStop: lastMarkerCoords.toArray() });
-          this.getAndDrawNewIso(lastMarkerCoords);
-        });
-      }
-    );
+    this.setState({ startAndEnd: newCoords });
     const marker = new mapboxgl.Marker({ color: "red" })
       .setLngLat(newCoords)
       .addTo(this.state.map);
@@ -96,12 +75,17 @@ export default class App extends React.PureComponent {
 
   clearGeocoderResult = () => {
     this.state.markerArr.forEach((marker) => marker.remove());
-    this.state.map.removeLayer("isoLayer");
-    this.state.map.removeSource("iso");
-    this.state.map.removeLayer("newIsoLayer");
-    this.state.map.removeSource("newIso");
-    this.state.map.removeLayer("route");
-    this.state.map.removeSource("geojson");
+    this.setState({ routeDistance: 0 });
+    // Add better null handling when logic is fully fleshed out
+    // i.e. maybe have a state variable dataHasBeenFetched or something to prevent submit logic with null input
+    if (this.state.map.getSource("geojson")) {
+      this.state.map.removeLayer("isoLayer");
+      this.state.map.removeSource("iso");
+      this.state.map.removeLayer("newIsoLayer");
+      this.state.map.removeSource("newIso");
+      this.state.map.removeLayer("route");
+      this.state.map.removeSource("geojson");
+    }
   };
 
   /**
@@ -109,8 +93,8 @@ export default class App extends React.PureComponent {
    */
   getIso = async () => {
     const query = await fetch(
-      `${urlBase}${this.state.profile}/${this.state.lng},${
-        this.state.lat
+      `${urlBase}${this.state.profile}/${this.state.startAndEnd[0]},${
+        this.state.startAndEnd[1]
       }?contours_meters=${Math.floor(
         (this.state.distance * 1609.34) / 3
       )}&polygons=true&access_token=${mapboxgl.accessToken}`,
@@ -283,32 +267,33 @@ export default class App extends React.PureComponent {
     });
   };
 
-  distanceChanged(event) {
-    this.setState({ distance: event.target.value });
-  }
-
-  handleSubmit(event) {
-    // event.preventDefault();
-    // Add better null handling when logic is fully fleshed out
-    // i.e. maybe have a state variable dataHasBeenFetched or something to prevent submit logic with null input
-    if (this.state.map.getSource("iso")) {
-      // remove current layers and markers, re-paint with newly-requested route
-      this.state.markerArr.forEach((marker, index) => {
-        if (index > 0) {
-          marker.remove();
+  handleSubmit({ distance, unit }) {
+    if (distance !== "") {
+      this.setState({ distance: distance }, () => {
+        // Add better null handling when logic is fully fleshed out
+        // i.e. maybe have a state variable dataHasBeenFetched or something to prevent submit logic with null input
+        if (this.state.markerArr.length > 0) {
+          // remove current layers and markers, re-paint with newly-requested route
+          this.state.markerArr.forEach((marker, index) => {
+            if (index > 0) {
+              marker.remove();
+            }
+          });
+          this.state.markerArr.splice(1);
+          if (this.state.map.getSource("geojson")) {
+            this.state.map.removeLayer("isoLayer");
+            this.state.map.removeSource("iso");
+            this.state.map.removeLayer("route");
+            this.state.map.removeSource("geojson");
+          }
+          this.getIso().then(() => {
+            // get last marker and make an iso from it
+            const lastMarkerCoords =
+              this.state.markerArr[this.state.markerArr.length - 1].getLngLat();
+            this.setState({ firstStop: lastMarkerCoords.toArray() });
+            this.getAndDrawNewIso(lastMarkerCoords);
+          });
         }
-      });
-      this.state.markerArr.splice(1);
-      this.state.map.removeLayer("isoLayer");
-      this.state.map.removeSource("iso");
-      this.state.map.removeLayer("route");
-      this.state.map.removeSource("geojson");
-      this.getIso().then(() => {
-        // get last marker and make an iso from it
-        const lastMarkerCoords =
-          this.state.markerArr[this.state.markerArr.length - 1].getLngLat();
-        this.setState({ firstStop: lastMarkerCoords.toArray() });
-        this.getAndDrawNewIso(lastMarkerCoords);
       });
     }
   }
@@ -322,7 +307,6 @@ export default class App extends React.PureComponent {
             distance={this.state.distance}
             routeDistance={this.state.routeDistance}
             handleSubmit={this.handleSubmit}
-            distanceChanged={this.distanceChanged}
             mapboxgl={mapboxgl}
             onGeocoderResult={this.geocoderResult}
             clearGeocoderResult={this.clearGeocoderResult}

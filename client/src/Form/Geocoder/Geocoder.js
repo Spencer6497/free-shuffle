@@ -1,5 +1,5 @@
 import MapboxGeocoder from "@mapbox/mapbox-gl-geocoder";
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 
 import "./Geocoder.scss";
 
