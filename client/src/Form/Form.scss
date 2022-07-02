@@ -1,1 +1,3 @@
-
+.btn-group > .btn-check:checked + .btn {
+  z-index: 0;
+}
