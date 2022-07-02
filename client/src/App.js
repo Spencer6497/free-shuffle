@@ -1,9 +1,8 @@
-import React, { Component } from "react";
+import React from "react";
 import Container from "react-bootstrap/Container";
 import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
 
-import MapboxGeocoder from "@mapbox/mapbox-gl-geocoder";
 import "@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css";
 
 import { lineIntersect } from "@turf/turf";
@@ -13,7 +12,6 @@ import "./App.scss";
 import mapboxgl from "!mapbox-gl"; // eslint-disable-line import/no-webpack-loader-syntax
 import NavBar from "./NavBar/NavBar";
 import Form from "./Form/Form";
-import { toHaveStyle } from "@testing-library/jest-dom/dist/matchers";
 
 mapboxgl.accessToken =
   "pk.eyJ1Ijoic3BlbmNlcjY0OTciLCJhIjoiY2w0bHF6NXpiMDBpaTNnbzJleHA3ZDYzbCJ9.ZZGzmhDOJtzWZJSAa8M0gQ";
@@ -40,8 +38,11 @@ export default class App extends React.PureComponent {
       markerArr: [],
     };
     this.mapContainer = React.createRef();
-    this.handleChange = this.handleChange.bind(this);
+    this.handleChange = this.distanceChanged.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
+    this.distanceChanged = this.distanceChanged.bind(this);
+    this.geocoderResult = this.geocoderResult.bind(this);
+    this.clearGeocoderResult = this.clearGeocoderResult.bind(this);
   }
 
   componentDidMount() {
@@ -64,54 +65,44 @@ export default class App extends React.PureComponent {
         this.state.map.resize();
       });
     });
-
-    // Initialize geocoder
-    const geocoder = new MapboxGeocoder({
-      accessToken: mapboxgl.accessToken,
-      mapboxgl: mapboxgl,
-    });
-
-    geocoder.addTo("#geocoder");
-
-    // Add geocoder result to container.
-    geocoder.on("result", (e) => {
-      this.state.markerArr.forEach((marker) => marker.remove());
-      const newCoords = e.result.center;
-      // Set new longitude/latitude and subsequently get isochrone
-      this.setState(
-        { lng: newCoords[0], lat: newCoords[1], startAndEnd: e.result.center },
-        () => {
-          this.getIso().then(() => {
-            // get last marker and make an iso from it
-            const lastMarkerCoords =
-              this.state.markerArr[this.state.markerArr.length - 1].getLngLat();
-            this.setState({ firstStop: lastMarkerCoords.toArray() });
-            this.getAndDrawNewIso(lastMarkerCoords);
-          });
-        }
-      );
-      const marker = new mapboxgl.Marker({ color: "red" })
-        .setLngLat(newCoords)
-        .addTo(map);
-      this.state.markerArr.push(marker);
-      this.state.map.flyTo({
-        center: newCoords,
-        zoom: 13,
-        speed: 1,
-      });
-    });
-
-    // Clear results container when search is cleared.
-    geocoder.on("clear", () => {
-      this.state.markerArr.forEach((marker) => marker.remove());
-      this.state.map.removeLayer("isoLayer");
-      this.state.map.removeSource("iso");
-      this.state.map.removeLayer("newIsoLayer");
-      this.state.map.removeSource("newIso");
-      this.state.map.removeLayer("route");
-      this.state.map.removeSource("geojson");
-    });
   }
+
+  geocoderResult = (e) => {
+    this.state.markerArr.forEach((marker) => marker.remove());
+    const newCoords = e.result.center;
+    // Set new longitude/latitude and subsequently get isochrone
+    this.setState(
+      { lng: newCoords[0], lat: newCoords[1], startAndEnd: e.result.center },
+      () => {
+        this.getIso().then(() => {
+          // get last marker and make an iso from it
+          const lastMarkerCoords =
+            this.state.markerArr[this.state.markerArr.length - 1].getLngLat();
+          this.setState({ firstStop: lastMarkerCoords.toArray() });
+          this.getAndDrawNewIso(lastMarkerCoords);
+        });
+      }
+    );
+    const marker = new mapboxgl.Marker({ color: "red" })
+      .setLngLat(newCoords)
+      .addTo(this.state.map);
+    this.state.markerArr.push(marker);
+    this.state.map.flyTo({
+      center: newCoords,
+      zoom: 13,
+      speed: 1,
+    });
+  };
+
+  clearGeocoderResult = () => {
+    this.state.markerArr.forEach((marker) => marker.remove());
+    this.state.map.removeLayer("isoLayer");
+    this.state.map.removeSource("iso");
+    this.state.map.removeLayer("newIsoLayer");
+    this.state.map.removeSource("newIso");
+    this.state.map.removeLayer("route");
+    this.state.map.removeSource("geojson");
+  };
 
   /**
    * Must convert miles to meters before sending to API
@@ -292,7 +283,7 @@ export default class App extends React.PureComponent {
     });
   };
 
-  handleChange(event) {
+  distanceChanged(event) {
     this.setState({ distance: event.target.value });
   }
 
@@ -331,7 +322,10 @@ export default class App extends React.PureComponent {
             distance={this.state.distance}
             routeDistance={this.state.routeDistance}
             handleSubmit={this.handleSubmit}
-            addressChanged={this.handleChange}
+            distanceChanged={this.distanceChanged}
+            mapboxgl={mapboxgl}
+            onGeocoderResult={this.geocoderResult}
+            clearGeocoderResult={this.clearGeocoderResult}
           ></Form>
           <Col lg={8}>
             <div ref={this.mapContainer} className="map-container" />
