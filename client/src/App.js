@@ -12,6 +12,8 @@ import { distance } from "@turf/turf";
 import "./App.scss";
 import mapboxgl from "!mapbox-gl"; // eslint-disable-line import/no-webpack-loader-syntax
 import NavBar from "./NavBar/NavBar";
+import Form from "./Form/Form";
+import { toHaveStyle } from "@testing-library/jest-dom/dist/matchers";
 
 mapboxgl.accessToken =
   "pk.eyJ1Ijoic3BlbmNlcjY0OTciLCJhIjoiY2w0bHF6NXpiMDBpaTNnbzJleHA3ZDYzbCJ9.ZZGzmhDOJtzWZJSAa8M0gQ";
@@ -295,7 +297,7 @@ export default class App extends React.PureComponent {
   }
 
   handleSubmit(event) {
-    event.preventDefault();
+    // event.preventDefault();
     // Add better null handling when logic is fully fleshed out
     // i.e. maybe have a state variable dataHasBeenFetched or something to prevent submit logic with null input
     if (this.state.map.getSource("iso")) {
@@ -325,22 +327,12 @@ export default class App extends React.PureComponent {
       <Container fluid className="parent-container">
         <NavBar></NavBar>
         <Row>
-          <Col lg={4}>
-            <div id="geocoder"></div>
-            <form onSubmit={this.handleSubmit}>
-              <label>
-                Distance (miles):
-                <br></br>
-                <input
-                  type="text"
-                  value={this.state.distance}
-                  onChange={this.handleChange}
-                ></input>
-                <pre>{this.state.routeDistance}</pre>
-              </label>
-              <input type="submit" id="distanceSubmitButton"></input>
-            </form>
-          </Col>
+          <Form
+            distance={this.state.distance}
+            routeDistance={this.state.routeDistance}
+            handleSubmit={this.handleSubmit}
+            addressChanged={this.handleChange}
+          ></Form>
           <Col lg={8}>
             <div ref={this.mapContainer} className="map-container" />
           </Col>
