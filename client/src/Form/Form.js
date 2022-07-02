@@ -51,19 +51,20 @@ export default class Form extends React.Component {
     this.state.handleSubmit({
       distance: this.state.distance,
       unit: this.state.unit,
+      mode: this.state.radioButtons
+        .filter(
+          (radioButton) => radioButton.value === this.state.radioButtonValue
+        )[0]
+        .name.toLowerCase(),
     });
   }
 
   onDistanceChanged(event) {
-    this.setState({ distance: event.target.value }, () => {
-      console.log(this.state.distance);
-    });
+    this.setState({ distance: event.target.value });
   }
 
   onUnitChanged(event) {
-    this.setState({ unit: event.target.value }, () => {
-      console.log(this.state.unit);
-    });
+    this.setState({ unit: event.target.value.toLowerCase() });
   }
 
   render() {
@@ -94,8 +95,8 @@ export default class Form extends React.Component {
                     value={this.state.unit}
                     onChange={this.onUnitChanged}
                   >
-                    <option>Mi</option>
-                    <option>Km</option>
+                    <option>mi</option>
+                    <option>km</option>
                   </FormComponent.Select>
                 </Col>
               </Row>
