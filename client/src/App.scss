@@ -39,10 +39,12 @@
 }
 
 .parent-container {
-  height: 100vh;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 
   .row {
-    height: 100vh;
+    height: 100%;
   }
 
   .map-container {

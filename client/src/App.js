@@ -11,6 +11,7 @@ import { distance } from "@turf/turf";
 
 import "./App.scss";
 import mapboxgl from "!mapbox-gl"; // eslint-disable-line import/no-webpack-loader-syntax
+import NavBar from "./NavBar/NavBar";
 
 mapboxgl.accessToken =
   "pk.eyJ1Ijoic3BlbmNlcjY0OTciLCJhIjoiY2w0bHF6NXpiMDBpaTNnbzJleHA3ZDYzbCJ9.ZZGzmhDOJtzWZJSAa8M0gQ";
@@ -48,7 +49,7 @@ export default class App extends React.PureComponent {
       style: "mapbox://styles/mapbox/streets-v11",
       center: [lng, lat],
       zoom: zoom,
-      proximity: this.clientIP,
+      // proximity: this.clientIP, figure out the logic for this, probably grab from user's browser
     });
 
     // set the map state and subsequently set event listeners
@@ -322,6 +323,7 @@ export default class App extends React.PureComponent {
   render() {
     return (
       <Container fluid className="parent-container">
+        <NavBar></NavBar>
         <Row>
           <Col lg={4}>
             <div id="geocoder"></div>
