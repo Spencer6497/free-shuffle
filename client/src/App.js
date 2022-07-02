@@ -7,8 +7,7 @@ import MapboxGeocoder from "@mapbox/mapbox-gl-geocoder";
 import "@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css";
 
 import { lineIntersect } from "@turf/turf";
-
-import logo from "./logo.svg";
+import { distance } from "@turf/turf";
 
 import "./App.scss";
 import mapboxgl from "!mapbox-gl"; // eslint-disable-line import/no-webpack-loader-syntax
@@ -42,8 +41,6 @@ export default class App extends React.PureComponent {
     this.handleSubmit = this.handleSubmit.bind(this);
   }
 
-  clientIP = "";
-
   componentDidMount() {
     const { lng, lat, zoom } = this.state;
     const map = new mapboxgl.Map({
@@ -62,7 +59,6 @@ export default class App extends React.PureComponent {
 
       this.state.map.on("load", () => {
         this.state.map.resize();
-        // remove if unneeded
       });
     });
 
@@ -73,9 +69,6 @@ export default class App extends React.PureComponent {
     });
 
     geocoder.addTo("#geocoder");
-
-    // Get the geocoder results container.
-    const results = document.getElementById("result");
 
     // Add geocoder result to container.
     geocoder.on("result", (e) => {
@@ -112,6 +105,8 @@ export default class App extends React.PureComponent {
       this.state.map.removeSource("iso");
       this.state.map.removeLayer("newIsoLayer");
       this.state.map.removeSource("newIso");
+      this.state.map.removeLayer("route");
+      this.state.map.removeSource("geojson");
     });
   }
 
@@ -186,20 +181,36 @@ export default class App extends React.PureComponent {
         this.state.firstIso,
         this.state.secondIso
       );
-      const randomIntersectionIndex = Math.floor(
-        Math.random() * intersections.features.length
-      );
+      // find the intersection whose distance from the 1st stop is closest to a third of the entered distance
+      const secondStop = intersections.features.reduce((acc, current) => {
+        const currentDistanceFromFirst = distance(
+          this.state.firstStop,
+          current,
+          { units: "miles" }
+        );
+        const prevDistanceFromFirst = distance(this.state.firstStop, acc, {
+          units: "miles",
+        });
+        return Math.abs(currentDistanceFromFirst - this.state.distance / 3) <
+          Math.abs(prevDistanceFromFirst - this.state.distance / 3)
+          ? current
+          : acc;
+      });
+
+      // const randomIntersectionIndex = Math.floor(
+      //   Math.random() * intersections.features.length
+      // );
+
       // Set 2nd stop and plot all of them on the map
       this.setState(
         {
-          secondStop:
-            intersections.features[randomIntersectionIndex].geometry
-              .coordinates,
+          secondStop: secondStop.geometry.coordinates,
         },
         () => {
           const marker = new mapboxgl.Marker({ color: "yellow" })
             .setLngLat(this.state.secondStop)
             .addTo(this.state.map);
+          this.state.markerArr.push(marker);
           this.getRoute([
             this.state.startAndEnd,
             this.state.firstStop,
@@ -242,7 +253,7 @@ export default class App extends React.PureComponent {
       }, "")
       .slice(0, -1);
     const query = await fetch(
-      `https://api.mapbox.com/directions/v5/mapbox/cycling/${formattedAPIString}?steps=true&geometries=geojson&access_token=${mapboxgl.accessToken}`,
+      `https://api.mapbox.com/directions/v5/mapbox/walking/${formattedAPIString}?continue_straight=false&alternatives=true&banner_instructions=true&steps=true&geometries=geojson&access_token=${mapboxgl.accessToken}`,
       { method: "GET" }
     );
 
@@ -258,13 +269,14 @@ export default class App extends React.PureComponent {
         coordinates: route,
       },
     };
+    this.state.map.addSource("geojson", {
+      type: "geojson",
+      data: geojson,
+    });
     this.state.map.addLayer({
-      id: Math.random().toString(),
+      id: "route",
       type: "line",
-      source: {
-        type: "geojson",
-        data: geojson,
-      },
+      source: "geojson",
       layout: {
         "line-join": "round",
         "line-cap": "round",
@@ -283,11 +295,20 @@ export default class App extends React.PureComponent {
 
   handleSubmit(event) {
     event.preventDefault();
-    // Remove null check when submission logic is fully fleshed out
+    // Add better null handling when logic is fully fleshed out
+    // i.e. maybe have a state variable dataHasBeenFetched or something to prevent submit logic with null input
     if (this.state.map.getSource("iso")) {
-      // remove current isochrone layer, re-paint with newly-entered distance
+      // remove current layers and markers, re-paint with newly-requested route
+      this.state.markerArr.forEach((marker, index) => {
+        if (index > 0) {
+          marker.remove();
+        }
+      });
+      this.state.markerArr.splice(1);
       this.state.map.removeLayer("isoLayer");
       this.state.map.removeSource("iso");
+      this.state.map.removeLayer("route");
+      this.state.map.removeSource("geojson");
       this.getIso().then(() => {
         // get last marker and make an iso from it
         const lastMarkerCoords =
