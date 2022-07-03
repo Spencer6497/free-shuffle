@@ -282,7 +282,7 @@ export default class App extends React.PureComponent {
     return (
       <Container fluid className="parent-container">
         <NavBar></NavBar>
-        <Row>
+        <Row className="main-row">
           <Form
             distance={this.state.distance}
             routeDistance={this.state.routeDistance}
@@ -292,7 +292,7 @@ export default class App extends React.PureComponent {
             onGeocoderResult={this.geocoderResult}
             clearGeocoderResult={this.clearGeocoderResult}
           ></Form>
-          <Col lg={8}>
+          <Col lg={8} className="flex-50">
             <div ref={this.mapContainer} className="map-container" />
           </Col>
         </Row>

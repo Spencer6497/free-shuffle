@@ -47,11 +47,15 @@
   display: flex;
   flex-direction: column;
 
-  .row {
+  .main-row {
     height: 100%;
 
     @include media-breakpoint-down(lg) {
-      flex-wrap: wrap-reverse;
+      flex-direction: column-reverse;
+
+      > .flex-50 {
+        flex-basis: 50%;
+      }
     }
   }
 

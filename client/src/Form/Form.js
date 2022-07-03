@@ -25,6 +25,7 @@ export default class Form extends React.Component {
       routeDistance: props.routeDistance,
       handleSubmit: props.handleSubmit,
       unit: "mi",
+      unitDisplay: "mi",
       radioButtons: [
         { name: "Running", value: "1" },
         { name: "Cycling", value: "2" },
@@ -43,7 +44,10 @@ export default class Form extends React.Component {
 
   componentDidUpdate(prevProps) {
     if (this.props.routeDistance !== prevProps.routeDistance) {
-      this.setState({ routeDistance: this.props.routeDistance });
+      this.setState({
+        routeDistance: this.props.routeDistance,
+        unitDisplay: this.state.unit,
+      });
     }
     if (this.props.initialCoords !== prevProps.initialCoords) {
       this.setState({ initialCoords: this.props.initialCoords });
@@ -102,7 +106,7 @@ export default class Form extends React.Component {
 
   render() {
     return (
-      <Col lg={4}>
+      <Col lg={4} className="flex-50">
         <Container>
           <Geocoder
             mapboxgl={this.state.mapboxgl}
@@ -114,7 +118,7 @@ export default class Form extends React.Component {
             <FormComponent.Group className="mb-3" controlId="distance">
               <FormComponent.Label>Distance:</FormComponent.Label>
               <Row className="distance-input">
-                <Col sm={8} md={10} className="mb-2">
+                <Col xs={8} md={10} className="mb-2">
                   <FormComponent.Control
                     required
                     type="number"
@@ -130,7 +134,7 @@ export default class Form extends React.Component {
                     {this.state.validationMessage}
                   </FormComponent.Control.Feedback>
                 </Col>
-                <Col sm={4} md={2} className="mb-2">
+                <Col xs={4} md={2} className="mb-2">
                   <FormComponent.Select
                     aria-label="Units Selector"
                     value={this.state.unit}
@@ -176,7 +180,7 @@ export default class Form extends React.Component {
             <h2>
               Route found!
               <Badge bg="success">
-                {this.state.routeDistance.toFixed(2)} {this.state.unit}
+                {this.state.routeDistance.toFixed(2)} {this.state.unitDisplay}
               </Badge>
             </h2>
           )}

@@ -24,6 +24,7 @@ input[type="number"] {
 }
 
 .col-lg-4 {
+  overflow: auto;
   .container {
     span.badge {
       margin-left: 0.5em;
