@@ -5,7 +5,7 @@ import Col from "react-bootstrap/Col";
 
 import "@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css";
 
-import { lineIntersect } from "@turf/turf";
+import { lineIntersect, bbox } from "@turf/turf";
 import { distance as turfDistance } from "@turf/turf";
 
 import "./App.scss";
@@ -275,6 +275,7 @@ export default class App extends React.PureComponent {
         "line-opacity": 0.75,
       },
     });
+    this.state.map.fitBounds(bbox(geojson), { padding: 50 });
   }
 
   render() {

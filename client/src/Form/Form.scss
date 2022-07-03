@@ -6,6 +6,12 @@
   z-index: 0;
 }
 
+.distance-input {
+  @include media-breakpoint-down(sm) {
+    flex-wrap: wrap !important;
+  }
+}
+
 .col-lg-4 {
   .container {
     span.badge {

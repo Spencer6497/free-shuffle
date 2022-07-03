@@ -84,8 +84,8 @@ export default class Form extends React.Component {
           <FormComponent className="mb-3" onSubmit={this.onSubmit}>
             <FormComponent.Group className="mb-3" controlId="distance">
               <FormComponent.Label>Distance:</FormComponent.Label>
-              <Row>
-                <Col sm={8} md={10}>
+              <Row className="distance-input">
+                <Col sm={8} md={10} className="mb-2">
                   <FormComponent.Control
                     type="text"
                     placeholder="Desired distance"
@@ -93,7 +93,7 @@ export default class Form extends React.Component {
                     onChange={this.onDistanceChanged}
                   />
                 </Col>
-                <Col sm={4} md={2}>
+                <Col sm={4} md={2} className="mb-2">
                   <FormComponent.Select
                     aria-label="Units Selector"
                     value={this.state.unit}
