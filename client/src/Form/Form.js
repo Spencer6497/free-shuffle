@@ -1,6 +1,7 @@
 import { propertiesContainsFilter } from "@turf/turf";
 import React from "react";
 import {
+  Badge,
   Button,
   ButtonGroup,
   Col,
@@ -80,7 +81,7 @@ export default class Form extends React.Component {
           initialCoords={this.state.initialCoords}
         ></Geocoder>
         <Container>
-          <FormComponent onSubmit={this.onSubmit}>
+          <FormComponent className="mb-3" onSubmit={this.onSubmit}>
             <FormComponent.Group className="mb-3" controlId="distance">
               <FormComponent.Label>Distance:</FormComponent.Label>
               <Row>
@@ -103,9 +104,6 @@ export default class Form extends React.Component {
                   </FormComponent.Select>
                 </Col>
               </Row>
-              <FormComponent.Text className="text-muted">
-                {this.state.routeDistance}
-              </FormComponent.Text>
             </FormComponent.Group>
             <FormComponent.Group className="mb-3" controlId="mode">
               <FormComponent.Label>Mode of transit:</FormComponent.Label>
@@ -137,6 +135,14 @@ export default class Form extends React.Component {
               Find a Route
             </Button>
           </FormComponent>
+          {this.state.routeDistance > 0 && (
+            <h2>
+              Route found!
+              <Badge bg="secondary">
+                {this.state.routeDistance.toFixed(2)} {this.state.unit}
+              </Badge>
+            </h2>
+          )}
         </Container>
       </Col>
     );

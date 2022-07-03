@@ -55,6 +55,11 @@ export default class App extends React.PureComponent {
               position.coords.longitude,
               position.coords.latitude,
             ];
+            this.state.map.flyTo({
+              center: userCoords,
+              zoom: 14,
+              speed: 1,
+            });
             this.setState({ initialCoords: userCoords });
           });
         }
@@ -118,37 +123,7 @@ export default class App extends React.PureComponent {
 
     const json = await query.json();
     const data = json.routes[0];
-    this.setState({
-      routeDistance:
-        units === "mi" ? data.distance / 1609 : data.distance / 1000,
-    });
-    const route = data.geometry.coordinates;
-    const geojson = {
-      type: "Feature",
-      properties: {},
-      geometry: {
-        type: "LineString",
-        coordinates: route,
-      },
-    };
-    this.state.map.addSource("geojson", {
-      type: "geojson",
-      data: geojson,
-    });
-    this.state.map.addLayer({
-      id: "route",
-      type: "line",
-      source: "geojson",
-      layout: {
-        "line-join": "round",
-        "line-cap": "round",
-      },
-      paint: {
-        "line-color": "#3887be",
-        "line-width": 5,
-        "line-opacity": 0.75,
-      },
-    });
+    return data;
   };
 
   handleSubmit({ distanceChanged, distance, unit, mode }) {
@@ -243,7 +218,39 @@ export default class App extends React.PureComponent {
               ],
               mode,
               unit
-            );
+            ).then((route) => {
+              this.setState({
+                routeDistance:
+                  unit === "mi" ? route.distance / 1609 : route.distance / 1000,
+              });
+              const routeCoords = route.geometry.coordinates;
+              const geojson = {
+                type: "Feature",
+                properties: {},
+                geometry: {
+                  type: "LineString",
+                  coordinates: routeCoords,
+                },
+              };
+              this.state.map.addSource("geojson", {
+                type: "geojson",
+                data: geojson,
+              });
+              this.state.map.addLayer({
+                id: "route",
+                type: "line",
+                source: "geojson",
+                layout: {
+                  "line-join": "round",
+                  "line-cap": "round",
+                },
+                paint: {
+                  "line-color": "#3887be",
+                  "line-width": 5,
+                  "line-opacity": 0.75,
+                },
+              });
+            });
           });
         }
       );
