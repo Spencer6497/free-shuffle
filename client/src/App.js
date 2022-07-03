@@ -24,13 +24,8 @@ export default class App extends React.PureComponent {
   constructor(props) {
     super(props);
     this.state = {
-      zoom: 12,
-      firstIso: null,
-      secondIso: null,
       initialCoords: [],
       startAndEnd: [],
-      firstStop: [],
-      secondStop: [],
       routeDistance: 0,
       map: null,
       markerArr: [],
@@ -46,7 +41,7 @@ export default class App extends React.PureComponent {
       container: this.mapContainer.current,
       style: "mapbox://styles/mapbox/streets-v11",
       center: [-84.5, 39.1],
-      zoom: this.state.zoom,
+      zoom: 12,
     });
 
     // set the map state and subsequently resize for responsive display
@@ -76,7 +71,7 @@ export default class App extends React.PureComponent {
     this.setState({ startAndEnd: newCoords, markerArr: [marker] });
     this.state.map.flyTo({
       center: newCoords,
-      zoom: 13,
+      zoom: 14,
       speed: 1,
     });
   };
@@ -172,106 +167,86 @@ export default class App extends React.PureComponent {
         this.state.map.removeLayer("route");
         this.state.map.removeSource("geojson");
       }
-      this.getIso(this.state.startAndEnd, distance, mode, unit).then((data) => {
-        this.setState({ firstIso: data });
-        // retrieve random point along the isochrone and place a marker there
-        const maxNumPoints = data.features[0].geometry.coordinates[0].length;
-        let randomPoint =
-          data.features[0].geometry.coordinates[0][
-            Math.floor(Math.random() * maxNumPoints)
-          ];
-        // ensure that "random" point hasn't been visited already
-        if (!previouslyGeneratedPoints.has(randomPoint[0])) {
-          previouslyGeneratedPoints.add(randomPoint[0]);
-        } else {
-          let retryCount = 0;
-          let newPointFound = false;
-          while (retryCount < maxNumPoints && !newPointFound) {
-            retryCount++;
-            // get another random point, test it against the Set of already-visited points
-            randomPoint =
-              data.features[0].geometry.coordinates[0][
-                Math.floor(Math.random() * maxNumPoints)
-              ];
-            if (!previouslyGeneratedPoints.has(randomPoint[0])) {
-              newPointFound = true;
+      this.getIso(this.state.startAndEnd, distance, mode, unit).then(
+        (firstIso) => {
+          // retrieve random point along the isochrone and place a marker there
+          const maxNumPoints =
+            firstIso.features[0].geometry.coordinates[0].length;
+          let randomPoint =
+            firstIso.features[0].geometry.coordinates[0][
+              Math.floor(Math.random() * maxNumPoints)
+            ];
+          // ensure that "random" point hasn't been visited already
+          if (!previouslyGeneratedPoints.has(randomPoint[0])) {
+            previouslyGeneratedPoints.add(randomPoint[0]);
+          } else {
+            let retryCount = 0;
+            let newPointFound = false;
+            while (retryCount < maxNumPoints && !newPointFound) {
+              retryCount++;
+              // get another random point, test it against the Set of already-visited points
+              randomPoint =
+                firstIso.features[0].geometry.coordinates[0][
+                  Math.floor(Math.random() * maxNumPoints)
+                ];
+              if (!previouslyGeneratedPoints.has(randomPoint[0])) {
+                newPointFound = true;
+                previouslyGeneratedPoints.add(randomPoint[0]);
+                break;
+              }
+            }
+            if (!newPointFound) {
+              // all points along the isochrone have been visited
+              // clear the list and start over
+              previouslyGeneratedPoints.clear();
               previouslyGeneratedPoints.add(randomPoint[0]);
-              break;
             }
           }
-          if (!newPointFound) {
-            // all points along the isochrone have been visited
-            // clear the list and start over
-            previouslyGeneratedPoints.clear();
-            previouslyGeneratedPoints.add(randomPoint[0]);
-          }
-        }
 
-        const marker = new mapboxgl.Marker({ color: "blue" })
-          .setLngLat(randomPoint)
-          .addTo(this.state.map);
-        this.state.markerArr.push(marker);
+          const marker = new mapboxgl.Marker({ color: "blue" })
+            .setLngLat(randomPoint)
+            .addTo(this.state.map);
+          this.state.markerArr.push(marker);
 
-        // use the previously-returned marker to make a second, overlapping iso
-        const lastMarkerCoords = marker.getLngLat();
-        this.setState({ firstStop: lastMarkerCoords.toArray() });
-        this.getIso(lastMarkerCoords.toArray(), distance, mode, unit).then(
-          (data) => {
+          // use the previously-returned marker to make a second, overlapping iso
+          const firstStop = marker.getLngLat().toArray();
+          this.getIso(firstStop, distance, mode, unit).then((secondIso) => {
             // set secondIso and use Turf.js to find intersections
-            this.setState({ secondIso: data }, () => {
-              const intersections = lineIntersect(
-                this.state.firstIso,
-                this.state.secondIso
+            const intersections = lineIntersect(firstIso, secondIso);
+            // find the intersection whose distance from the 1st stop is closest to a third of the entered distance
+            const secondStop = intersections.features.reduce((acc, current) => {
+              const currentDistanceFromFirst = turfDistance(
+                firstStop,
+                current,
+                { units: "miles" }
               );
-              // find the intersection whose distance from the 1st stop is closest to a third of the entered distance
-              const secondStop = intersections.features.reduce(
-                (acc, current) => {
-                  const currentDistanceFromFirst = turfDistance(
-                    this.state.firstStop,
-                    current,
-                    { units: "miles" }
-                  );
-                  const prevDistanceFromFirst = turfDistance(
-                    this.state.firstStop,
-                    acc,
-                    {
-                      units: "miles",
-                    }
-                  );
-                  return Math.abs(
-                    currentDistanceFromFirst - this.state.distance / 3
-                  ) < Math.abs(prevDistanceFromFirst - this.state.distance / 3)
-                    ? current
-                    : acc;
-                }
-              );
+              const prevDistanceFromFirst = turfDistance(firstStop, acc, {
+                units: "miles",
+              });
+              return Math.abs(currentDistanceFromFirst - distance / 3) <
+                Math.abs(prevDistanceFromFirst - distance / 3)
+                ? current
+                : acc;
+            }).geometry.coordinates;
 
-              // Set 2nd stop and plot all of them on the map
-              this.setState(
-                {
-                  secondStop: secondStop.geometry.coordinates,
-                },
-                () => {
-                  const marker = new mapboxgl.Marker({ color: "yellow" })
-                    .setLngLat(this.state.secondStop)
-                    .addTo(this.state.map);
-                  this.state.markerArr.push(marker);
-                  this.getRoute(
-                    [
-                      this.state.startAndEnd,
-                      this.state.firstStop,
-                      this.state.secondStop,
-                      this.state.startAndEnd,
-                    ],
-                    mode,
-                    unit
-                  );
-                }
-              );
-            });
-          }
-        );
-      });
+            // Set 2nd stop and plot all of them on the map
+            const marker = new mapboxgl.Marker({ color: "yellow" })
+              .setLngLat(secondStop)
+              .addTo(this.state.map);
+            this.state.markerArr.push(marker);
+            this.getRoute(
+              [
+                this.state.startAndEnd,
+                firstStop,
+                secondStop,
+                this.state.startAndEnd,
+              ],
+              mode,
+              unit
+            );
+          });
+        }
+      );
     }
   }
 
