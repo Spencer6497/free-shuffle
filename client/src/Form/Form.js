@@ -20,6 +20,7 @@ export default class Form extends React.Component {
     this.state = {
       distance: 3, // miles by default
       initialCoords: props.initialCoords,
+      distanceChanged: false,
       routeDistance: props.routeDistance,
       handleSubmit: props.handleSubmit,
       unit: "mi",
@@ -50,6 +51,7 @@ export default class Form extends React.Component {
     event.preventDefault();
     this.state.handleSubmit({
       distance: this.state.distance,
+      distanceChanged: this.state.distanceChanged,
       unit: this.state.unit,
       mode: this.state.radioButtons
         .filter(
@@ -57,10 +59,11 @@ export default class Form extends React.Component {
         )[0]
         .name.toLowerCase(),
     });
+    this.setState({ distanceChanged: false });
   }
 
   onDistanceChanged(event) {
-    this.setState({ distance: event.target.value });
+    this.setState({ distance: event.target.value, distanceChanged: true });
   }
 
   onUnitChanged(event) {
