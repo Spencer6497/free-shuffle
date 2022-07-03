@@ -28,6 +28,7 @@ export default class App extends React.PureComponent {
       startAndEnd: [],
       routeDistance: 0,
       map: null,
+      loading: false,
       markerArr: [],
     };
     this.mapContainer = React.createRef();
@@ -106,7 +107,7 @@ export default class App extends React.PureComponent {
     return data;
   };
 
-  getRoute = async (coords, profile, units) => {
+  getRoute = async (coords, profile) => {
     const formattedAPIString = coords
       .reduce((acc, curr) => {
         return acc + curr.toString() + ";";
@@ -129,6 +130,7 @@ export default class App extends React.PureComponent {
   handleSubmit({ distanceChanged, distance, unit, mode }) {
     // replace this w/ form validation
     if (distance !== "" && this.state.markerArr.length > 0) {
+      this.setState({ loading: true });
       if (distanceChanged) {
         previouslyGeneratedPoints.clear();
       }
@@ -178,13 +180,8 @@ export default class App extends React.PureComponent {
             }
           }
 
-          const marker = new mapboxgl.Marker({ color: "blue" })
-            .setLngLat(randomPoint)
-            .addTo(this.state.map);
-          this.state.markerArr.push(marker);
-
           // use the previously-returned marker to make a second, overlapping iso
-          const firstStop = marker.getLngLat().toArray();
+          const firstStop = randomPoint;
           this.getIso(firstStop, distance, mode, unit).then((secondIso) => {
             // set secondIso and use Turf.js to find intersections
             const intersections = lineIntersect(firstIso, secondIso);
@@ -204,11 +201,6 @@ export default class App extends React.PureComponent {
                 : acc;
             }).geometry.coordinates;
 
-            // Set 2nd stop and plot all of them on the map
-            const marker = new mapboxgl.Marker({ color: "yellow" })
-              .setLngLat(secondStop)
-              .addTo(this.state.map);
-            this.state.markerArr.push(marker);
             this.getRoute(
               [
                 this.state.startAndEnd,
@@ -216,45 +208,73 @@ export default class App extends React.PureComponent {
                 secondStop,
                 this.state.startAndEnd,
               ],
-              mode,
-              unit
+              mode
             ).then((route) => {
-              this.setState({
-                routeDistance:
-                  unit === "mi" ? route.distance / 1609 : route.distance / 1000,
-              });
-              const routeCoords = route.geometry.coordinates;
-              const geojson = {
-                type: "Feature",
-                properties: {},
-                geometry: {
-                  type: "LineString",
-                  coordinates: routeCoords,
-                },
-              };
-              this.state.map.addSource("geojson", {
-                type: "geojson",
-                data: geojson,
-              });
-              this.state.map.addLayer({
-                id: "route",
-                type: "line",
-                source: "geojson",
-                layout: {
-                  "line-join": "round",
-                  "line-cap": "round",
-                },
-                paint: {
-                  "line-color": "#3887be",
-                  "line-width": 5,
-                  "line-opacity": 0.75,
-                },
-              });
+              // Only accept routes within <0.5 mi/km of desired distance
+              // we can change error range, but if we make it smaller, more API calls will have to be made, negatively impacting performance
+              const error = Math.abs(
+                distance -
+                  (unit === "mi"
+                    ? route.distance / 1609
+                    : route.distance / 1000)
+              );
+              if (error < 0.5) {
+                this.setState({
+                  routeDistance:
+                    unit === "mi"
+                      ? route.distance / 1609
+                      : route.distance / 1000,
+                });
+                const routeCoords = route.geometry.coordinates;
+                this.renderMap(routeCoords, firstStop, secondStop);
+                this.setState({ loading: false });
+              } else {
+                this.handleSubmit({ distanceChanged, distance, unit, mode });
+              }
             });
           });
         }
       );
     }
+  }
+
+  renderMap(route, firstStop, secondStop) {
+    let marker = new mapboxgl.Marker({ color: "blue" })
+      .setLngLat(firstStop)
+      .addTo(this.state.map);
+    this.state.markerArr.push(marker);
+
+    marker = new mapboxgl.Marker({ color: "yellow" })
+      .setLngLat(secondStop)
+      .addTo(this.state.map);
+    this.state.markerArr.push(marker);
+
+    const geojson = {
+      type: "Feature",
+      properties: {},
+      geometry: {
+        type: "LineString",
+        coordinates: route,
+      },
+    };
+    this.state.map.addSource("geojson", {
+      type: "geojson",
+      data: geojson,
+    });
+    this.state.map.addLayer({
+      id: "route",
+      type: "line",
+      source: "geojson",
+      layout: {
+        "line-join": "round",
+        "line-cap": "round",
+      },
+      paint: {
+        "line-color": "#3887be",
+        "line-width": 5,
+        "line-opacity": 0.75,
+      },
+    });
   }
 
   render() {

@@ -1,3 +1,18 @@
+@import "node_modules/bootstrap/scss/functions";
+@import "node_modules/bootstrap/scss/variables";
+@import "node_modules/bootstrap/scss/mixins";
+
 .btn-group > .btn-check:checked + .btn {
   z-index: 0;
+}
+
+.col-lg-4 {
+  .container {
+    span.badge {
+      margin-left: 0.5em;
+    }
+    @include media-breakpoint-up(lg) {
+      margin-top: 30%;
+    }
+  }
 }

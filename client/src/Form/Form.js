@@ -74,13 +74,13 @@ export default class Form extends React.Component {
   render() {
     return (
       <Col lg={4}>
-        <Geocoder
-          mapboxgl={this.state.mapboxgl}
-          onGeocoderResult={this.state.onGeocoderResult}
-          clearGeocoderResult={this.state.clearGeocoderResult}
-          initialCoords={this.state.initialCoords}
-        ></Geocoder>
         <Container>
+          <Geocoder
+            mapboxgl={this.state.mapboxgl}
+            onGeocoderResult={this.state.onGeocoderResult}
+            clearGeocoderResult={this.state.clearGeocoderResult}
+            initialCoords={this.state.initialCoords}
+          ></Geocoder>
           <FormComponent className="mb-3" onSubmit={this.onSubmit}>
             <FormComponent.Group className="mb-3" controlId="distance">
               <FormComponent.Label>Distance:</FormComponent.Label>
@@ -138,7 +138,7 @@ export default class Form extends React.Component {
           {this.state.routeDistance > 0 && (
             <h2>
               Route found!
-              <Badge bg="secondary">
+              <Badge bg="success">
                 {this.state.routeDistance.toFixed(2)} {this.state.unit}
               </Badge>
             </h2>
