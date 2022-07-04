@@ -1,16 +1,16 @@
 {
   "files": {
-    "main.css": "/free-shuffle/static/css/main.aaaa628b.css",
-    "main.js": "/free-shuffle/static/js/main.eab05ee9.js",
+    "main.css": "/free-shuffle/static/css/main.0ebdaa85.css",
+    "main.js": "/free-shuffle/static/js/main.765a3b5a.js",
     "static/js/787.41d92cdc.chunk.js": "/free-shuffle/static/js/787.41d92cdc.chunk.js",
     "static/media/Freeshuffle.png": "/free-shuffle/static/media/Freeshuffle.95f15cd669c0c52d6c36.png",
     "index.html": "/free-shuffle/index.html",
-    "main.aaaa628b.css.map": "/free-shuffle/static/css/main.aaaa628b.css.map",
-    "main.eab05ee9.js.map": "/free-shuffle/static/js/main.eab05ee9.js.map",
+    "main.0ebdaa85.css.map": "/free-shuffle/static/css/main.0ebdaa85.css.map",
+    "main.765a3b5a.js.map": "/free-shuffle/static/js/main.765a3b5a.js.map",
     "787.41d92cdc.chunk.js.map": "/free-shuffle/static/js/787.41d92cdc.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.aaaa628b.css",
-    "static/js/main.eab05ee9.js"
+    "static/css/main.0ebdaa85.css",
+    "static/js/main.765a3b5a.js"
   ]
 }
