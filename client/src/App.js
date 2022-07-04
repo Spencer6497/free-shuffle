@@ -12,6 +12,7 @@ import "./App.scss";
 import mapboxgl from "!mapbox-gl"; // eslint-disable-line import/no-webpack-loader-syntax
 import NavBar from "./NavBar/NavBar";
 import Form from "./Form/Form";
+import arrow from "./images/arrow.png";
 
 mapboxgl.accessToken =
   "pk.eyJ1Ijoic3BlbmNlcjY0OTciLCJhIjoiY2w0bHF6NXpiMDBpaTNnbzJleHA3ZDYzbCJ9.ZZGzmhDOJtzWZJSAa8M0gQ";
@@ -64,6 +65,13 @@ export default class App extends React.PureComponent {
             this.setState({ initialCoords: userCoords });
           });
         }
+
+        this.state.map.loadImage(arrow, (err, img) => {
+          if (err) {
+            return;
+          }
+          this.state.map.addImage("arrowHead", img);
+        });
       });
     });
   }
@@ -88,6 +96,7 @@ export default class App extends React.PureComponent {
     this.setState({ routeDistance: 0, initialCoords: [], markerArr: [] });
     if (this.state.map.getSource("geojson")) {
       this.state.map.removeLayer("route");
+      this.state.map.removeLayer("arrowId");
       this.state.map.removeSource("geojson");
     }
   };
@@ -142,6 +151,7 @@ export default class App extends React.PureComponent {
       this.state.markerArr.splice(1);
       if (this.state.map.getSource("geojson")) {
         this.state.map.removeLayer("route");
+        this.state.map.removeLayer("arrowId");
         this.state.map.removeSource("geojson");
       }
       this.getIso(this.state.startAndEnd, distance, mode, unit).then(
@@ -244,7 +254,7 @@ export default class App extends React.PureComponent {
       .addTo(this.state.map);
     this.state.markerArr.push(marker);
 
-    marker = new mapboxgl.Marker({ color: "yellow" })
+    marker = new mapboxgl.Marker({ color: "blue" })
       .setLngLat(secondStop)
       .addTo(this.state.map);
     this.state.markerArr.push(marker);
@@ -261,20 +271,34 @@ export default class App extends React.PureComponent {
       type: "geojson",
       data: geojson,
     });
-    this.state.map.addLayer({
-      id: "route",
-      type: "line",
-      source: "geojson",
-      layout: {
-        "line-join": "round",
-        "line-cap": "round",
-      },
-      paint: {
-        "line-color": "#3887be",
-        "line-width": 5,
-        "line-opacity": 0.75,
-      },
-    });
+    this.state.map
+      .addLayer({
+        id: "route",
+        type: "line",
+        source: "geojson",
+        layout: {
+          "line-join": "round",
+          "line-cap": "round",
+        },
+        paint: {
+          "line-color": "#3887be",
+          "line-width": 5,
+          "line-opacity": 0.75,
+        },
+      })
+      .addLayer({
+        id: "arrowId",
+        type: "symbol",
+        source: "geojson",
+        layout: {
+          "symbol-placement": "line",
+          "symbol-spacing": 100,
+          "icon-allow-overlap": true,
+          "icon-image": "arrowHead",
+          "icon-size": 0.05,
+          visibility: "visible",
+        },
+      });
     this.state.map.fitBounds(bbox(geojson), { padding: 50 });
   }
 
