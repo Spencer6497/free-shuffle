@@ -13,6 +13,7 @@ import mapboxgl from "!mapbox-gl"; // eslint-disable-line import/no-webpack-load
 import NavBar from "./NavBar/NavBar";
 import Form from "./Form/Form";
 import arrow from "./images/arrow.png";
+import { Spinner } from "react-bootstrap";
 
 mapboxgl.accessToken =
   "pk.eyJ1Ijoic3BlbmNlcjY0OTciLCJhIjoiY2w0bHF6NXpiMDBpaTNnbzJleHA3ZDYzbCJ9.ZZGzmhDOJtzWZJSAa8M0gQ";
@@ -57,12 +58,14 @@ export default class App extends React.PureComponent {
               position.coords.longitude,
               position.coords.latitude,
             ];
-            this.state.map.flyTo({
-              center: userCoords,
-              zoom: 14,
-              speed: 1,
+            this.setState({ initialCoords: userCoords, loading: true }, () => {
+              this.state.map.flyTo({
+                center: userCoords,
+                zoom: 14,
+                speed: 1,
+              });
+              this.setState({ loading: false });
             });
-            this.setState({ initialCoords: userCoords });
           });
         }
 
@@ -82,12 +85,17 @@ export default class App extends React.PureComponent {
     const marker = new mapboxgl.Marker({ color: "red" })
       .setLngLat(newCoords)
       .addTo(this.state.map);
-    this.setState({ startAndEnd: newCoords, markerArr: [marker] });
-    this.state.map.flyTo({
-      center: newCoords,
-      zoom: 14,
-      speed: 1,
-    });
+    this.setState(
+      { startAndEnd: newCoords, markerArr: [marker], loading: true },
+      () => {
+        this.state.map.flyTo({
+          center: newCoords,
+          zoom: 14,
+          speed: 1,
+        });
+        this.setState({ loading: false });
+      }
+    );
   };
 
   clearGeocoderResult = () => {
@@ -139,7 +147,7 @@ export default class App extends React.PureComponent {
   handleSubmit({ distanceChanged, distance, unit, mode }) {
     // replace this w/ form validation
     if (distance !== "" && this.state.markerArr.length > 0) {
-      this.setState({ loading: true });
+      this.setState({ loading: true, routeDistance: 0 });
       if (distanceChanged) {
         previouslyGeneratedPoints.clear();
       }
@@ -309,6 +317,7 @@ export default class App extends React.PureComponent {
         <Row className="main-row">
           <Form
             distance={this.state.distance}
+            loading={this.state.loading}
             routeDistance={this.state.routeDistance}
             handleSubmit={this.handleSubmit}
             mapboxgl={mapboxgl}
@@ -316,7 +325,15 @@ export default class App extends React.PureComponent {
             onGeocoderResult={this.geocoderResult}
             clearGeocoderResult={this.clearGeocoderResult}
           ></Form>
-          <Col lg={8} className="flex-50">
+          <Col
+            lg={8}
+            className={`flex-50 ${this.state.loading ? "disabled" : ""}`}
+          >
+            {this.state.loading && (
+              <div className="spinner-holder">
+                <Spinner animation="border"></Spinner>
+              </div>
+            )}
             <div ref={this.mapContainer} className="map-container" />
           </Col>
         </Row>

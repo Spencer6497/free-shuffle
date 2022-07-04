@@ -7,6 +7,7 @@ import {
   Col,
   Container,
   Row,
+  Spinner,
   ToggleButton,
 } from "react-bootstrap";
 import { Form as FormComponent, FormGroup } from "react-bootstrap";
@@ -20,6 +21,7 @@ export default class Form extends React.Component {
     super(props);
     this.state = {
       distance: 3, // miles by default
+      loading: props.loading,
       initialCoords: props.initialCoords,
       distanceChanged: false,
       routeDistance: props.routeDistance,
@@ -51,6 +53,9 @@ export default class Form extends React.Component {
     }
     if (this.props.initialCoords !== prevProps.initialCoords) {
       this.setState({ initialCoords: this.props.initialCoords });
+    }
+    if (this.props.loading !== prevProps.loading) {
+      this.setState({ loading: this.props.loading });
     }
   }
 
@@ -172,8 +177,23 @@ export default class Form extends React.Component {
                 </ButtonGroup>
               </Row>
             </FormComponent.Group>
-            <Button variant="primary" type="submit">
-              Find a Route
+            <Button
+              variant="primary"
+              type="submit"
+              className="find-route-button"
+              disabled={this.state.loading}
+            >
+              {this.state.loading ? (
+                <Spinner
+                  as="span"
+                  animation="border"
+                  size="sm"
+                  role="status"
+                  aria-hidden="true"
+                />
+              ) : (
+                "Find a Route"
+              )}
             </Button>
           </FormComponent>
           {this.state.routeDistance > 0 && (
