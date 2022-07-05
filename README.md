@@ -1,70 +1,37 @@
-# Getting Started with Create React App
+# Freeshuffle
+Randomly generate running and cycling routes using Mapbox and Turf.js
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+![meme](https://i.imgflip.com/6lsb2k.jpg "Meme")
 
-## Available Scripts
+*I'm not paying you to go on a run!*
 
-In the project directory, you can run:
+## Inspiration
+One day, I got bored with my normal running routes so I googled "Random running route generator". I stumbled upon a website called https://routeshuffle.com/. <br>
+While the functionality was pretty neat, I soon realized that I wouldn't be able to export the route into Google Maps. Whatever. <br>
+Then I realized that I wasn't able so save a route either. <br>
+I wasn't even able to log in and make a free account!
+<br>
+<br>
+Thus, Freeshuffle was born.
 
-### `npm start`
+## How it works
+Freeshuffle relies on the underlying logic of Isodistances, or places that are equidistant from a given point, something like *this:*
+<br>
+<br>
+![Isochrone example](https://ci5.googleusercontent.com/proxy/UGZs_d2CJLDuW4f-6qsuRrlORNkPRerbfVi1QnpboHhbz6QJd-gP_2t1TAho2hIVaMzVHjK3Z547IwTnhLXxJx06MQf7LCQ2A0uv1LEw2tJsXpVb16bH4c9NpRfRZvJ8=s0-d-e1-ft "Isochrone example")
+<br>
+<br>
+Basically, it plots the chosen start/end on a map, takes a desired distance as input, and does the following:
+1. Calls the [Mapbox Isochrone API](https://docs.mapbox.com/api/navigation/isochrone/) with the starting/ending coordinates and  1/3 of the desired distance as query parameters (1/3 was chosen as 2 other points [3 total] is the minimum # of points required to plot a circle-like shape)
+2. Draws the returned isochrone (isodistance in our case) around the Start/End point
+3. Chooses a random point along the isodistance as the 2nd stop on the route
+4. Calls the Mapbox Isochrone API *again* with the 2nd stop and 1/3 of desired distance as query params
+5. Paints *another* isodistance around *it*
+6. Finds a list of all intersections between these isodistances (using [Turf.js](https://turfjs.org/))
+7. Picks whichever intersection is closest to 1/3 of the desired distance (straight-line distance, using Turf.js again)
+8. Plots all three points and calls the [Mapbox Directions API](https://docs.mapbox.com/api/navigation/directions/) to find a route between them
+9. Throws the result out if it doesn't fall within 0.5 miles/km of the desired distance and recurses
+10. Paints the route on the map
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
-
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
-
-### `npm test`
-
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
-
-### `npm run build`
-
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
-
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
-
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
-
-### `npm run eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
-
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
-
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+Visualization of the algorithm in action (please excuse the messy UI :) ):
+![Freeshuffle algorithm visualization](free-shuffle/client/src/images/Isochrones.gif)
