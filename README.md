@@ -34,4 +34,6 @@ Basically, it plots the chosen start/end on a map, takes a desired distance as i
 10. Paints the route on the map
 
 Visualization of the algorithm in action (please excuse the messy UI :) ):
-![Freeshuffle algorithm visualization](free-shuffle/client/src/images/Isochrones.gif)
+<br>
+<br>
+![Freeshuffle algorithm visualization](client/src/images/Isochrones.gif)
