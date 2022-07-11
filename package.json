@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "scripts": {
     "client": "cd client && npm run start",
+    "heroku-postbuild": "cd client; npm run build",
     "server": "nodemon server.js",
     "dev": "concurrently --kill-others-on-fail \"npm run server\" \"npm run client\""
   },
