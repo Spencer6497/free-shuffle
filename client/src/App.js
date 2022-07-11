@@ -16,9 +16,8 @@ import arrow from "./images/arrow.png";
 import { Spinner } from "react-bootstrap";
 
 mapboxgl.accessToken =
+  process.env.ACCESS_TOKEN ||
   "pk.eyJ1Ijoic3BlbmNlcjY0OTciLCJhIjoiY2w0bHF6NXpiMDBpaTNnbzJleHA3ZDYzbCJ9.ZZGzmhDOJtzWZJSAa8M0gQ";
-
-const urlBase = "https://api.mapbox.com/isochrone/v1/mapbox/";
 
 const previouslyGeneratedPoints = new Set();
 
@@ -112,13 +111,7 @@ export default class App extends React.PureComponent {
   getIso = async (coords, distance, profile, units) => {
     const distanceAsFloat = parseFloat(distance);
     const query = await fetch(
-      `${urlBase}${profile === "running" ? "walking" : profile}/${coords[0]},${
-        coords[1]
-      }?contours_meters=${Math.floor(
-        (units === "mi" ? distanceAsFloat * 1609.34 : distanceAsFloat * 1000) /
-          3
-      )}&polygons=true&access_token=${mapboxgl.accessToken}`,
-      { method: "GET" }
+      `api/getIso?lng=${coords[0]}&lat=${coords[1]}&distance=${distanceAsFloat}&profile=${profile}&units=${units}`
     );
     const data = await query.json();
     return data;
@@ -131,14 +124,8 @@ export default class App extends React.PureComponent {
       }, "")
       .slice(0, -1);
     const query = await fetch(
-      `https://api.mapbox.com/directions/v5/mapbox/${
-        profile === "running" ? "walking" : profile
-      }/${formattedAPIString}?continue_straight=true&alternatives=true&geometries=geojson&access_token=${
-        mapboxgl.accessToken
-      }`,
-      { method: "GET" }
+      `api/getRoute?profile=${profile}&formattedAPIString=${formattedAPIString}`
     );
-
     const json = await query.json();
     const data = json.routes[0];
     return data;
