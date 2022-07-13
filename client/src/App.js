@@ -15,9 +15,7 @@ import Form from "./Form/Form";
 import arrow from "./images/arrow.png";
 import { Spinner } from "react-bootstrap";
 
-mapboxgl.accessToken =
-  process.env.ACCESS_TOKEN ||
-  "pk.eyJ1Ijoic3BlbmNlcjY0OTciLCJhIjoiY2w0bHF6NXpiMDBpaTNnbzJleHA3ZDYzbCJ9.ZZGzmhDOJtzWZJSAa8M0gQ";
+mapboxgl.accessToken = process.env.ACCESS_TOKEN;
 
 const previouslyGeneratedPoints = new Set();
 
