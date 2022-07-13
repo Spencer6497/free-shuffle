@@ -13,7 +13,9 @@
     "concurrently": "^7.2.2",
     "cors": "^2.8.5",
     "express": "^4.16.4",
+    "express-favicon": "^2.0.1",
     "gh-pages": "^4.0.0",
-    "nodemon": "^2.0.19"
+    "nodemon": "^2.0.19",
+    "path": "^0.12.7"
   }
 }
