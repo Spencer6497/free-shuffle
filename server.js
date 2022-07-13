@@ -15,7 +15,7 @@ const urlBase = "https://api.mapbox.com/isochrone/v1/mapbox/";
 
 app.use(cors()); // Enable CORS
 app.use(express.json()); // Recognize Request Objects as JSON objects
-app.use(favicon("client/build/favicon.ico"));
+app.use(favicon(__dirname + "client/build/favicon.ico"));
 app.use(express.static("client/build")); // serve static files (css & js) from the 'public' directory
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
