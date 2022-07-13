@@ -5,12 +5,14 @@
     "client": "cd client && npm run start",
     "heroku-postbuild": "cd client && npm install && npm run build",
     "server": "nodemon server.js",
-    "dev": "concurrently --kill-others-on-fail \"npm run server\" \"npm run client\""
+    "dev": "concurrently --kill-others-on-fail \"npm run server\" \"npm run client\"",
+    "prod": "concurrently \"npm run server\" \"npm run client\""
   },
   "dependencies": {
     "axios": "^0.27.2",
     "body-parser": "^1.18.3",
     "concurrently": "^7.2.2",
+    "cors": "^2.8.5",
     "express": "^4.16.4",
     "gh-pages": "^4.0.0",
     "nodemon": "^2.0.19"
