@@ -47,6 +47,10 @@
   display: flex;
   flex-direction: column;
 
+  @include media-breakpoint-up(lg) {
+    padding-bottom: 5em;
+  }
+
   .main-row {
     height: 100%;
 

@@ -13,7 +13,7 @@ import mapboxgl from "!mapbox-gl"; // eslint-disable-line import/no-webpack-load
 import NavBar from "./NavBar/NavBar";
 import Form from "./Form/Form";
 import arrow from "./images/arrow.png";
-import { Spinner } from "react-bootstrap";
+import { Navbar, Spinner } from "react-bootstrap";
 
 mapboxgl.accessToken =
   "pk.eyJ1Ijoic3BlbmNlcjY0OTciLCJhIjoiY2w0bHF6NXpiMDBpaTNnbzJleHA3ZDYzbCJ9.ZZGzmhDOJtzWZJSAa8M0gQ";
@@ -32,6 +32,9 @@ export default class App extends React.PureComponent {
       map: null,
       loading: false,
       markerArr: [],
+      firstStop: [],
+      secondStop: [],
+      mode: "walking",
     };
     this.mapContainer = React.createRef();
     this.handleSubmit = this.handleSubmit.bind(this);
@@ -245,7 +248,12 @@ export default class App extends React.PureComponent {
                 });
                 const routeCoords = route.geometry.coordinates;
                 this.renderMap(routeCoords, firstStop, secondStop);
-                this.setState({ loading: false });
+                this.setState({
+                  loading: false,
+                  firstStop: firstStop,
+                  secondStop: secondStop,
+                  mode: mode,
+                });
               } else {
                 this.handleSubmit({ distanceChanged, distance, unit, mode });
               }
@@ -313,7 +321,13 @@ export default class App extends React.PureComponent {
   render() {
     return (
       <Container fluid className="parent-container">
-        <NavBar></NavBar>
+        <NavBar
+          routeDistance={this.state.routeDistance}
+          origin={this.state.startAndEnd}
+          firstStop={this.state.firstStop}
+          secondStop={this.state.secondStop}
+          mode={this.state.mode}
+        ></NavBar>
         <Row className="main-row">
           <Form
             distance={this.state.distance}
