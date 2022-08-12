@@ -20,6 +20,8 @@ mapboxgl.accessToken =
 
 const urlBase = "https://api.mapbox.com/isochrone/v1/mapbox/";
 
+const maxRetries = 25;
+
 const previouslyGeneratedPoints = new Set();
 
 export default class App extends React.PureComponent {
@@ -35,6 +37,8 @@ export default class App extends React.PureComponent {
       firstStop: [],
       secondStop: [],
       mode: "walking",
+      retries: 0,
+      buttonDisabled: false,
     };
     this.mapContainer = React.createRef();
     this.handleSubmit = this.handleSubmit.bind(this);
@@ -89,7 +93,11 @@ export default class App extends React.PureComponent {
       .setLngLat(newCoords)
       .addTo(this.state.map);
     this.setState(
-      { startAndEnd: newCoords, markerArr: [marker], loading: true },
+      {
+        startAndEnd: newCoords,
+        markerArr: [marker],
+        loading: true,
+      },
       () => {
         this.state.map.flyTo({
           center: newCoords,
@@ -104,7 +112,13 @@ export default class App extends React.PureComponent {
   clearGeocoderResult = () => {
     previouslyGeneratedPoints.clear();
     this.state.markerArr.forEach((marker) => marker.remove());
-    this.setState({ routeDistance: 0, initialCoords: [], markerArr: [] });
+    this.setState({
+      routeDistance: 0,
+      initialCoords: [],
+      markerArr: [],
+      retries: 0,
+      buttonDisabled: false,
+    });
     if (this.state.map.getSource("geojson")) {
       this.state.map.removeLayer("route");
       this.state.map.removeLayer("arrowId");
@@ -149,9 +163,14 @@ export default class App extends React.PureComponent {
 
   handleSubmit({ distanceChanged, distance, unit, mode }) {
     // replace this w/ form validation
-    if (distance !== "" && this.state.markerArr.length > 0) {
+    if (
+      distance !== "" &&
+      this.state.markerArr.length > 0 &&
+      (this.state.retries <= maxRetries || distanceChanged)
+    ) {
       this.setState({ loading: true, routeDistance: 0 });
       if (distanceChanged) {
+        this.setState({ retries: 0, buttonDisabled: false });
         previouslyGeneratedPoints.clear();
       }
       this.state.markerArr.forEach((marker, index) => {
@@ -245,6 +264,7 @@ export default class App extends React.PureComponent {
                     unit === "mi"
                       ? route.distance / 1609
                       : route.distance / 1000,
+                  retries: 0,
                 });
                 const routeCoords = route.geometry.coordinates;
                 this.renderMap(routeCoords, firstStop, secondStop);
@@ -255,12 +275,25 @@ export default class App extends React.PureComponent {
                   mode: mode,
                 });
               } else {
-                this.handleSubmit({ distanceChanged, distance, unit, mode });
+                this.setState({ retries: this.state.retries + 1 }, () => {
+                  this.handleSubmit({
+                    distanceChanged: false,
+                    distance,
+                    unit,
+                    mode,
+                  });
+                });
               }
             });
           });
         }
       );
+    } else {
+      // max retries reached
+      this.setState({
+        loading: false,
+        buttonDisabled: true,
+      });
     }
   }
 
@@ -328,11 +361,15 @@ export default class App extends React.PureComponent {
           secondStop={this.state.secondStop}
           mode={this.state.mode}
         ></NavBar>
+        <Col className="large-remove">
+          <h2>Generate random running and cycling routes, completely free!</h2>
+        </Col>
         <Row className="main-row">
           <Form
             distance={this.state.distance}
             loading={this.state.loading}
             routeDistance={this.state.routeDistance}
+            buttonDisabled={this.state.buttonDisabled}
             handleSubmit={this.handleSubmit}
             mapboxgl={mapboxgl}
             initialCoords={this.state.initialCoords}

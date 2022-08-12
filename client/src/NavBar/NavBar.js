@@ -30,16 +30,12 @@ export default function NavBar({
     );
   }, [firstStop]);
 
-  useEffect(() => {
-    console.log(link);
-  }, [link]);
-
   const onExportClicked = () => setShowExport(true);
   const handleClose = () => setShowExport(false);
 
   return (
     <>
-      <Navbar expand="lg">
+      <Navbar expand="lg" className="main-nav">
         <Navbar.Brand href="#home">
           <img alt="" src={logo} className="d-inline-block align-top" />
         </Navbar.Brand>

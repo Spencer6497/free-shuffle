@@ -6,12 +6,6 @@
   z-index: 0;
 }
 
-.distance-input {
-  @include media-breakpoint-down(sm) {
-    flex-wrap: wrap !important;
-  }
-}
-
 input::-webkit-outer-spin-button,
 input::-webkit-inner-spin-button {
   -webkit-appearance: none;
@@ -25,13 +19,27 @@ input[type="number"] {
 
 .col-lg-4 {
   overflow: auto;
+
+  h1 {
+    font-family: "UniSansHeavyItalic";
+    padding: 1em;
+  }
+
   .container {
     span.badge {
       margin-left: 0.5em;
     }
-    @include media-breakpoint-up(lg) {
-      margin-top: 30%;
-    }
+  }
+}
+
+@font-face {
+  font-family: "UniSansHeavyItalic";
+  src: url("../fonts/UniSansHeavyItalic.otf") format("opentype");
+}
+
+@include media-breakpoint-down(lg) {
+  .medium-remove {
+    display: none;
   }
 }
 

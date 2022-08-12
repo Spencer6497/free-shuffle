@@ -49,6 +49,16 @@
 
   @include media-breakpoint-up(lg) {
     padding-bottom: 5em;
+
+    .large-remove {
+      display: none;
+    }
+  }
+
+  @include media-breakpoint-between(md, lg) {
+    .large-remove {
+      text-align: center;
+    }
   }
 
   .main-row {
@@ -87,4 +97,14 @@
 .disabled {
   pointer-events: none;
   opacity: 0.65;
+}
+
+@font-face {
+  font-family: "UniSansHeavyItalic";
+  src: url("./fonts/UniSansHeavyItalic.otf") format("opentype");
+}
+
+h2 {
+  font-family: "UniSansHeavyItalic";
+  padding: 0.25em;
 }
