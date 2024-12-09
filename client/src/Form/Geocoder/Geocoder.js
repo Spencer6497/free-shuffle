@@ -16,7 +16,7 @@ export default function Geocoder({
       accessToken: mapboxgl.accessToken,
       mapboxgl: mapboxgl,
       placeholder: "Starting point",
-      countries: "US",
+      countries: "GB,US",
     });
 
     setGeocoder(geocoder);
