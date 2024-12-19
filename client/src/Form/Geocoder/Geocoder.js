@@ -15,8 +15,7 @@ export default function Geocoder({
     const geocoder = new MapboxGeocoder({
       accessToken: mapboxgl.accessToken,
       mapboxgl: mapboxgl,
-      placeholder: "Starting point",
-      countries: "US",
+      placeholder: "Starting point"
     });
 
     setGeocoder(geocoder);

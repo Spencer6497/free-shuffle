@@ -15,8 +15,7 @@ import Form from "./Form/Form";
 import arrow from "./images/arrow.png";
 import { Navbar, Spinner } from "react-bootstrap";
 
-mapboxgl.accessToken =
-  "pk.eyJ1Ijoic3BlbmNlcjY0OTciLCJhIjoiY2w0bHF6NXpiMDBpaTNnbzJleHA3ZDYzbCJ9.ZZGzmhDOJtzWZJSAa8M0gQ";
+mapboxgl.accessToken = process.env.MAPBOX_TOKEN;
 
 const urlBase = "https://api.mapbox.com/isochrone/v1/mapbox/";
 
